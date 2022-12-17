@@ -6,12 +6,19 @@ pub(crate) struct OpenFiles {
     pub(crate) html: Option<String>,
 }
 
+fn extract_extensions(x: &str) -> &str {
+    let space = x.rfind(' ').unwrap_or(0);
+    let x = &x[space..];
+    let dot = x.find('.').expect("Missing extension");
+    &x[dot + 1..]
+}
+
 pub(crate) fn open_files(paths: Vec<String>) -> OpenFiles {
     let mut transcript: Option<String> = None;
     let mut cc: Option<String> = None;
     let mut html: Option<String> = None;
     for path in paths {
-        match &path[path.find('.').expect("Missing extension") + 1..] {
+        match extract_extensions(&path) {
             "cc.vtt" => {
                 assert!(
                     cc.replace(read_to_string(path).expect("Read cc")).is_none(),
