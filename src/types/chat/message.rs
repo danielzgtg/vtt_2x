@@ -1,5 +1,7 @@
-use crate::{Caption, Timestamp};
+use crate::types::Choreographer;
+use crate::{Caption, Timed, Timestamp};
 
+#[derive(Copy, Clone)]
 pub(crate) struct Chat<'a> {
     time: Timestamp,
     text: &'a str,
@@ -19,25 +21,19 @@ impl<'a> Chat<'a> {
         }
     }
 
-    pub(crate) fn time(&self) -> Timestamp {
-        self.time
-    }
-
-    pub(crate) fn adjust_time(&mut self) {
-        self.time.halve();
-    }
-
     pub(crate) fn max_size(&self) -> usize {
         Caption::max_size_internal(self.text, self.username)
     }
 
-    pub(crate) fn to_caption(self) -> Caption<'a> {
+    pub(crate) fn to_caption(self, choreographer: &Choreographer) -> Caption<'a> {
         let start = self.time;
-        let end = {
-            let mut end = start.clone();
-            end.add_5sec();
-            end
-        };
-        Caption::new(start, end, self.text, Some(self.username))
+        let end = choreographer.add_chat_time(start);
+        Caption::new(start, end, self.text, "", Some(self.username))
+    }
+}
+
+impl<'a> Timed for Chat<'a> {
+    fn time(&self) -> Timestamp {
+        self.time
     }
 }

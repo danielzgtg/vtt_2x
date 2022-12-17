@@ -3,13 +3,13 @@ use std::fs::read_to_string;
 pub(crate) struct OpenFiles {
     pub(crate) cc: Option<String>,
     pub(crate) transcript: Option<String>,
-    pub(crate) html: String,
+    pub(crate) html: Option<String>,
 }
 
-pub(crate) fn open_files<'a, I: Iterator<Item = &'a str>>(paths: I) -> OpenFiles {
-    let mut transcript = None;
-    let mut cc = None;
-    let mut html = None;
+pub(crate) fn open_files(paths: Vec<String>) -> OpenFiles {
+    let mut transcript: Option<String> = None;
+    let mut cc: Option<String> = None;
+    let mut html: Option<String> = None;
     for path in paths {
         match &path[path.find('.').expect("Missing extension") + 1..] {
             "cc.vtt" => {
@@ -18,7 +18,7 @@ pub(crate) fn open_files<'a, I: Iterator<Item = &'a str>>(paths: I) -> OpenFiles
                     "Duplicate cc"
                 );
             }
-            "transcript.vtt" => {
+            "transcript.vtt" | "srt" => {
                 assert!(
                     transcript
                         .replace(read_to_string(path).expect("Read transcript"))
@@ -44,6 +44,6 @@ pub(crate) fn open_files<'a, I: Iterator<Item = &'a str>>(paths: I) -> OpenFiles
     OpenFiles {
         cc,
         transcript,
-        html: html.expect("HTML not specified"),
+        html,
     }
 }

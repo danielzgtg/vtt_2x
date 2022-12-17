@@ -1,10 +1,10 @@
 use crate::types::timing::atoi::*;
 use crate::Timestamp;
 
-pub(crate) fn parse_caption_timing(raw: &[u8; 12]) -> Timestamp {
+pub(crate) fn parse_caption_timing<const VTT: bool>(raw: &[u8; 12]) -> Timestamp {
     assert_eq!(b':', raw[2], "Parse caption ':' 1");
     assert_eq!(b':', raw[5], "Parse caption ':' 2");
-    assert_eq!(b'.', raw[8], "Parse caption '.' 3");
+    assert_eq!(if VTT { b'.' } else { b',' }, raw[8], "Parse caption '.' 3");
     Timestamp::new(
         ((atoi2((&raw[0..2]).try_into().unwrap()) * 60 + atoi2((&raw[3..5]).try_into().unwrap()))
             * 60

@@ -1,7 +1,8 @@
 use crate::filesystem::{open_files, OpenFiles};
 use crate::output::output_vtt;
 use crate::parser::{parse_cc, parse_html, parse_transcript, Html};
-use crate::types::{parse_caption_timing, parse_chat_timing, Caption, Chat, Timestamp};
+pub use crate::types::Choreographer;
+use crate::types::{parse_caption_timing, parse_chat_timing, Caption, Chat, Timed, Timestamp};
 use crate::verifier::VerifiedHtml;
 
 mod filesystem;
@@ -10,7 +11,7 @@ mod parser;
 mod types;
 mod verifier;
 
-pub fn run<'a, I: Iterator<Item = &'a str>>(paths: I) {
+pub fn run(paths: Vec<String>, choreographer: Choreographer) {
     let OpenFiles {
         cc,
         transcript,
@@ -26,9 +27,16 @@ pub fn run<'a, I: Iterator<Item = &'a str>>(paths: I) {
     } else {
         None
     };
-    let parsed_html = parse_html(&html);
+    let parsed_html = if let Some(html) = html.as_deref() {
+        parse_html(&html)
+    } else {
+        Html::from_bypass(
+            parsed_transcript
+                .as_deref()
+                .expect("Need either html or cc")
+                .to_vec(),
+        )
+    };
     let verified_html = VerifiedHtml::verify(parsed_cc, parsed_transcript, parsed_html);
-    drop(cc);
-    drop(transcript);
-    output_vtt(verified_html);
+    output_vtt(verified_html, choreographer);
 }

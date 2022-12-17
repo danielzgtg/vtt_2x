@@ -1,5 +1,5 @@
 use crate::output::WEBVTT_HEADER;
-use crate::verifier::order::{verify_caption_order, verify_chat_order};
+use crate::verifier::order::verify_order;
 use crate::{Caption, Html};
 
 mod consistency;
@@ -13,14 +13,14 @@ impl<'a> VerifiedHtml<'a> {
         transcript: Option<Vec<Caption>>,
         html: Html<'a>,
     ) -> Self {
-        verify_chat_order(&html.chat);
-        verify_caption_order(&html.captions);
+        verify_order(&html.chat);
+        verify_order(&html.captions);
         if let Some(_cc) = cc {
-            // verify_caption_order(&cc); // WTF Zoom?
+            // verify_order(&cc); // WTF Zoom?
             // verify_against_cc(cc, &html.captions); // TODO fix or remove
         }
         if let Some(transcript) = transcript {
-            verify_caption_order(&transcript);
+            verify_order(&transcript);
             // verify_against_transcript(transcript, &html.captions); // TODO fix or remove
         }
         VerifiedHtml(html)

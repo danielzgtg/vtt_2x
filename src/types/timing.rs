@@ -49,21 +49,6 @@ impl Timestamp {
         Timestamp(parsed)
     }
 
-    #[inline]
-    pub(crate) fn halve(&mut self) {
-        self.0 /= 2;
-    }
-
-    #[inline]
-    pub(crate) fn add_5sec(&mut self) {
-        self.0 += 5000;
-    }
-
-    #[inline]
-    pub(crate) fn add_2sec(&mut self) {
-        self.0 += 2000;
-    }
-
     pub(crate) fn vtt(&self, result: &mut [u8; 12]) {
         let mut n = self.0;
         result[2] = b':';
@@ -76,6 +61,46 @@ impl Timestamp {
         itoa2(n % 60, (&mut result[3..5]).try_into().unwrap());
         itoa2(n / 60, (&mut result[0..2]).try_into().unwrap());
     }
+}
+
+pub struct Choreographer {
+    chat_time: u32,
+    min_caption_time: u32,
+    caption_divisor: u32,
+}
+
+impl Choreographer {
+    pub fn new(
+        chat_time: Option<u32>,
+        min_caption_time: Option<u32>,
+        caption_divisor: Option<u32>,
+    ) -> Self {
+        Choreographer {
+            chat_time: chat_time.unwrap_or(5000),
+            min_caption_time: min_caption_time.unwrap_or(2000),
+            caption_divisor: caption_divisor.unwrap_or(2),
+        }
+    }
+
+    pub(crate) fn add_chat_time(&self, timestamp: Timestamp) -> Timestamp {
+        Timestamp(timestamp.0 + self.chat_time)
+    }
+
+    pub(crate) fn adjust_caption_time(&self, start: Timestamp, end: Timestamp) -> [Timestamp; 2] {
+        let start = start.0 / self.caption_divisor;
+        let end = (start + self.min_caption_time).max(end.0 / self.caption_divisor);
+        [Timestamp(start), Timestamp(end)]
+    }
+}
+
+impl Default for Choreographer {
+    fn default() -> Self {
+        Self::new(None, None, None)
+    }
+}
+
+pub(crate) trait Timed {
+    fn time(&self) -> Timestamp;
 }
 
 #[cfg(test)]

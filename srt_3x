@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+usage() {
+    echo 'Usage: srt_3x transcript.srt'
+    exit 1
+}
+
+if [ "$#" -ne 1 ]; then
+    echo 'Wrong number of arguments'
+    usage
+fi
+
+if [[ ! "$1" =~ .+\..+ ]]; then
+    echo 'No file extension'
+    usage
+fi
+
+if [ ! -f "$1" ]; then
+    echo 'File missing'
+    usage
+fi
+
+base="${1%.*}"
+
+exec ~/bin/vtt_2x --caption-divisor 3 "$1" > "$base".fast.vtt

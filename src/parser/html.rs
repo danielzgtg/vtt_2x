@@ -16,6 +16,15 @@ impl Html<'_> {
     }
 }
 
+impl<'a> Html<'a> {
+    pub(crate) fn from_bypass(captions: Vec<Caption<'a>>) -> Self {
+        Html {
+            chat: vec![],
+            captions,
+        }
+    }
+}
+
 #[inline]
 fn parse_object_key<'a>(
     key: &'static str,
@@ -65,11 +74,12 @@ pub(crate) fn parse_html(html: &str) -> Html {
         "HTML Header"
     );
     {
-        let mut twice = Some(());
+        let mut count = 2;
         loop {
             let line = html.next().expect("EOF looking for window data start");
             if line == "};" {
-                if twice.take().is_none() {
+                count -= 1;
+                if count == 0 {
                     break;
                 }
                 continue;
@@ -90,12 +100,14 @@ pub(crate) fn parse_html(html: &str) -> Html {
         let text = parse_object_key("text", ": \"", "\",", &mut html);
         let end = parse_object_key("endTs", ": \"", "\",", &mut html);
         parse_object_footer("} );", &mut html);
-        let start =
-            parse_caption_timing(start.as_bytes().try_into().expect("Parse JSON start time"));
-        let end = parse_caption_timing(end.as_bytes().try_into().expect("Parse JSON end time"));
+        let start = parse_caption_timing::<true>(
+            start.as_bytes().try_into().expect("Parse JSON start time"),
+        );
+        let end =
+            parse_caption_timing::<true>(end.as_bytes().try_into().expect("Parse JSON end time"));
         result
             .captions
-            .push(Caption::new(start, end, text, Some(username)));
+            .push(Caption::new(start, end, text, "", Some(username)));
     }
     loop {
         if *html.peek().expect("EOF in chat") != "window.__data__.chatList.push({" {
