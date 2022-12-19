@@ -44,7 +44,7 @@ fn parse_subtitles_impl<'a, const CC: bool, const VTT: bool>(
         let start = parse_caption_timing::<VTT>((&timings[0..12]).try_into().unwrap());
         let end = parse_caption_timing::<VTT>((&timings[17..29]).try_into().unwrap());
         let text = subtitles.next().expect("Transcript text line");
-        let text2 = subtitles.next().expect("Transcript second text line");
+        let text2 = subtitles.next().unwrap_or("");
         result.push(Caption::new(start, end, text, text2, None));
         if !text2.is_empty() {
             if let Some(blank) = subtitles.next() {
