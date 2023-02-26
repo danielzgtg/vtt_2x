@@ -10,7 +10,7 @@ fn extract_extensions(x: &str) -> &str {
     let space = x.rfind(' ').unwrap_or(0);
     let x = &x[space..];
     let dot = x.find('.').expect("Missing extension");
-    &x[dot + 1..]
+    &x[dot..]
 }
 
 pub(crate) fn open_files(paths: Vec<String>) -> OpenFiles {
@@ -18,34 +18,29 @@ pub(crate) fn open_files(paths: Vec<String>) -> OpenFiles {
     let mut cc: Option<String> = None;
     let mut html: Option<String> = None;
     for path in paths {
-        match extract_extensions(&path) {
-            "cc.vtt" => {
-                assert!(
-                    cc.replace(read_to_string(path).expect("Read cc")).is_none(),
-                    "Duplicate cc"
-                );
-            }
-            "transcript.vtt" | "srt" => {
-                assert!(
-                    transcript
-                        .replace(read_to_string(path).expect("Read transcript"))
-                        .is_none(),
-                    "Duplicate transcript"
-                );
-            }
-            "txt" | "html" => {
-                assert!(
-                    html.replace(read_to_string(path).expect("Read html"))
-                        .is_none(),
-                    "Duplicate html"
-                );
-            }
-            e => {
-                if e.ends_with("webm") || e.ends_with("mp4") {
-                    continue;
-                }
-                panic!("Unexpected file extension {}", path)
-            }
+        let ext = extract_extensions(&path);
+        if ext.ends_with(".cc.vtt") {
+            assert!(
+                cc.replace(read_to_string(path).expect("Read cc")).is_none(),
+                "Duplicate cc"
+            );
+        } else if ext.ends_with(".transcript.vtt") || ext.ends_with(".srt") {
+            assert!(
+                transcript
+                    .replace(read_to_string(path).expect("Read transcript"))
+                    .is_none(),
+                "Duplicate transcript"
+            );
+        } else if ext.ends_with(".txt") || ext.ends_with(".html") {
+            assert!(
+                html.replace(read_to_string(path).expect("Read html"))
+                    .is_none(),
+                "Duplicate html"
+            );
+        } else if ext.ends_with(".webm") || ext.ends_with(".mp4") {
+            continue;
+        } else {
+            panic!("Unexpected file extension {}", ext);
         }
     }
     OpenFiles {
